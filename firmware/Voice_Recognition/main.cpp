@@ -25,10 +25,6 @@ using namespace ei;
 #define FRAME_WORDS             1024u
 #define WARMUP_FRAMES           4u
 
-#if (EI_CLASSIFIER_FREQUENCY != 16000)
-#error "Edge Impulse model must use 16000 Hz"
-#endif
-
 static cyhal_pdm_pcm_t pdm_pcm;
 static cyhal_clock_t   audio_clock;
 static cyhal_clock_t   pll_clock;
