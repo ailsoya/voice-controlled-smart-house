@@ -172,13 +172,6 @@ int main(void)
 
         select_loudest_window();
 
-        int peak = 0;
-        for (uint32_t i = 0; i < WINDOW_SAMPLES; i++) {
-            int a = abs(window_start[i]);
-            if (a > peak) { peak = a; }
-        }
-        printf("Audio peak: %d (good: ~3000..25000)\r\n", peak);
-
         signal_t signal;
         signal.total_length = WINDOW_SAMPLES;
         signal.get_data     = &get_audio_data;
