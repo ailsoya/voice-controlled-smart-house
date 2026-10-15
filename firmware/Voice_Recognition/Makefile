@@ -1,0 +1,78 @@
+MTB_TYPE=COMBINED
+
+TARGET=APP_CY8CKIT-062-WIFI-BT
+
+APPNAME=mtb-example-psoc6-pdm-pcm
+
+TOOLCHAIN=GCC_ARM
+
+CONFIG=Debug
+
+VERBOSE=
+
+COMPONENTS=
+
+DISABLE_COMPONENTS=
+
+SOURCES=
+
+INCLUDES=ei-model/
+
+DEFINES=
+DEFINES += CY_RETARGET_IO_CONVERT_LF_TO_CRLF
+DEFINES += ARM_MATH_LOOPUNROLL
+DEFINES += NDEBUG
+DEFINES += TF_LITE_DISABLE_X86_NEON=1
+DEFINES += EI_PORTING_INFINEONPSOC62=1
+DEFINES += EIDSP_USE_CMSIS_DSP=1
+DEFINES += EIDSP_QUANTIZE_FILTERBANK=0
+DEFINES += EI_CLASSIFIER_TFLITE_ENABLE_CMSIS_NN=1
+DEFINES += EI_CLASSIFIER_TFLITE_LOAD_CMSIS_NN_SOURCES=1
+DEFINES += EIDSP_LOAD_CMSIS_DSP_SOURCES=1
+
+VFP_SELECT=
+
+CFLAGS=
+CFLAGS += -Wno-strict-aliasing
+CFLAGS += -std=c11
+
+CXXFLAGS=
+
+ASFLAGS=
+
+LDFLAGS=
+LDFLAGS += -specs=nosys.specs
+
+LDLIBS=
+
+LINKER_SCRIPT=
+
+PREBUILD=
+
+POSTBUILD=
+
+CY_APP_PATH=
+
+CY_GETLIBS_SHARED_PATH=../
+
+CY_GETLIBS_SHARED_NAME=mtb_shared
+
+CY_COMPILER_PATH=
+
+CY_WIN_HOME=$(subst \,/,$(USERPROFILE))
+CY_TOOLS_PATHS ?= $(wildcard \
+    $(CY_WIN_HOME)/ModusToolbox/tools_* \
+    $(HOME)/ModusToolbox/tools_* \
+    /Applications/ModusToolbox/tools_*)
+
+CY_TOOLS_PATHS+=
+
+CY_TOOLS_DIR=$(lastword $(sort $(wildcard $(CY_TOOLS_PATHS))))
+
+ifeq ($(CY_TOOLS_DIR),)
+$(error Unable to find any of the available CY_TOOLS_PATHS -- $(CY_TOOLS_PATHS). On Windows, use forward slashes.)
+endif
+
+$(info Tools Directory: $(CY_TOOLS_DIR))
+
+include $(CY_TOOLS_DIR)/make/start.mk
