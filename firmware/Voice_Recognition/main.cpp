@@ -201,7 +201,6 @@ int main(void)
                 best_i = i;
             }
         }
-        printf("  (DSP %d ms, NN %d ms)\r\n", (int)ei_result.timing.dsp, (int)ei_result.timing.classification);
 
         const char *best_label = ei_result.classification[best_i].label;
         const float best_value = ei_result.classification[best_i].value;
