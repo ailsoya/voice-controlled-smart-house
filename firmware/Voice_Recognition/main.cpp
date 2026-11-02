@@ -199,12 +199,10 @@ int main(void)
         const float best_value = ei_result.classification[best_i].value;
         const bool is_color = (strcmp(best_label, "noise") != 0) && (strcmp(best_label, "unknown") != 0);
 
-        if (best_value >= CONFIDENCE_THRESHOLD && is_color) {
+         if (is_color) {
             printf("==> Recognized: %s\r\n", best_label);
-        } else if (best_value >= CONFIDENCE_THRESHOLD) {
-            printf("==> (%s)\r\n", best_label);
         } else {
-            printf("==> Not sure, try again\r\n");
+            printf("==> (%s)\r\n", best_label);
         }
         printf("\r\nPress SW2, then say a color.\r\n");
     }

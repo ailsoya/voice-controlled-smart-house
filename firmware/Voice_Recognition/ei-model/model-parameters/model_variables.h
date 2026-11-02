@@ -152,7 +152,7 @@ const ei_impulse_t impulse_1139491_1 = {
     .project_name = "smart_house",
     .impulse_id = 1,
     .impulse_name = "Impulse #1",
-    .deploy_version = 2,
+    .deploy_version = 3,
 
     .nn_input_frame_size = 650,
     .raw_sample_count = 16000,
