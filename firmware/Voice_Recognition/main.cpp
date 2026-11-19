@@ -16,9 +16,12 @@ using namespace ei;
 #define PDM_DATA                P10_5
 #define PDM_CLK                 P10_4
 
+// Піни підключення драйвера P9813 (DIN та CIN)
+#define P9813_DATA_PIN          P9_0
+#define P9813_CLK_PIN           P9_1
+
 #define MIC_GAIN                20      // 0.5 dB steps, range -24..21
 #define RECORD_SECONDS          2u
-#define CONFIDENCE_THRESHOLD    0.60f
 
 #define WINDOW_SAMPLES          (EI_CLASSIFIER_RAW_SAMPLE_COUNT)
 #define RECORD_SAMPLES          (SAMPLE_RATE_HZ * RECORD_SECONDS)
@@ -37,6 +40,49 @@ static int16_t recording[RECORD_SAMPLES];
 static const int16_t *window_start = recording;
 
 static cyhal_gpio_callback_data_t button_cb_data;
+
+// --- Функції керування драйвером P9813 ---
+
+static void p9813_send_byte(uint8_t data)
+{
+    for (int i = 0; i < 8; i++) {
+        cyhal_gpio_write(P9813_DATA_PIN, (data & 0x80) != 0);
+        cyhal_system_delay_us(5);
+
+        cyhal_gpio_write(P9813_CLK_PIN, true);
+        cyhal_system_delay_us(5);
+        cyhal_gpio_write(P9813_CLK_PIN, false);
+        cyhal_system_delay_us(5);
+
+        data <<= 1;
+    }
+}
+
+static void p9813_set_color(uint8_t r, uint8_t g, uint8_t b)
+{
+    // Початковий кадр (32 біти нулів)
+    for (int i = 0; i < 4; i++) { p9813_send_byte(0x00); }
+
+    // Контрольний байт (прапорець 11 + інвертовані старші біти B, G, R)
+    uint8_t flag = 0xC0;
+    if ((b & 0x80) == 0) flag |= 0x20;
+    if ((b & 0x40) == 0) flag |= 0x10;
+    if ((g & 0x80) == 0) flag |= 0x08;
+    if ((g & 0x40) == 0) flag |= 0x04;
+    if ((r & 0x80) == 0) flag |= 0x02;
+    if ((r & 0x40) == 0) flag |= 0x01;
+
+    // Порядок байтів для чипа P9813: Flag, Blue, Green, Red
+    p9813_send_byte(flag);
+    p9813_send_byte(b);
+    p9813_send_byte(g);
+    p9813_send_byte(r);
+
+    // Кінцевий кадр для фіксації кольору (32 біти нулів)
+    for (int i = 0; i < 4; i++) { p9813_send_byte(0x00); }
+}
+
+// ------------------------------------------
 
 static void button_isr_handler(void *arg, cyhal_gpio_event_t event)
 {
@@ -133,6 +179,11 @@ int main(void)
 
     cy_retarget_io_init(CYBSP_DEBUG_UART_TX, CYBSP_DEBUG_UART_RX, CY_RETARGET_IO_BAUDRATE);
 
+    // Ініціалізація пінів драйвера P9813 та вимкнення LED-стрічки на старті
+    cyhal_gpio_init(P9813_DATA_PIN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, false);
+    cyhal_gpio_init(P9813_CLK_PIN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, false);
+    p9813_set_color(0, 0, 0);
+
     cyhal_gpio_init(CYBSP_USER_LED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
     cyhal_gpio_init(CYBSP_USER_BTN, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
     button_cb_data.callback     = button_isr_handler;
@@ -196,11 +247,19 @@ int main(void)
         }
 
         const char *best_label = ei_result.classification[best_i].label;
-        const float best_value = ei_result.classification[best_i].value;
         const bool is_color = (strcmp(best_label, "noise") != 0) && (strcmp(best_label, "unknown") != 0);
 
-         if (is_color) {
+        if (is_color) {
             printf("==> Recognized: %s\r\n", best_label);
+
+            // Вмикаємо розпізнаний колір на LED-стрічці
+            if (strcmp(best_label, "Red") == 0) {
+                p9813_set_color(255, 0, 0);
+            } else if (strcmp(best_label, "Green") == 0) {
+                p9813_set_color(0, 0, 255);
+            } else if (strcmp(best_label, "Blue") == 0) {
+                p9813_set_color(0, 255, 0);
+            }
         } else {
             printf("==> (%s)\r\n", best_label);
         }
